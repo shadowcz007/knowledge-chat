@@ -1,12 +1,15 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Settings } from 'lucide-react';
+import { Settings, MessageSquare, Bookmark } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import SettingsDialog from '@/components/settings-dialog';
 import Sidebar from '@/components/sidebar';
 import ConnectionStatus from '@/components/connection-status';
 import { MCPProvider, useMCPContext } from '@/contexts/mcp-context';
+import SavedMessages from '@/components/saved-messages';
+import ChatDialog from '@/components/chat-dialog';
+
 
 const NetworkGraph = dynamic(() => import('@/components/network-graph'), {
   ssr: false,
@@ -14,6 +17,8 @@ const NetworkGraph = dynamic(() => import('@/components/network-graph'), {
 
 function HomeContent() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isSavedMessagesOpen, setIsSavedMessagesOpen] = useState(false);
   const { connect } = useMCPContext();
 
   const handleConfigSaved = (config: any) => {
@@ -54,12 +59,38 @@ function HomeContent() {
         </main>
         
         <Sidebar />
+        
+        {/* 聊天和保存消息按钮 */}
+        <div className="fixed right-4 bottom-4 flex flex-col gap-2 z-10">
+          <button
+            onClick={() => setIsSavedMessagesOpen(true)}
+            className="p-3 rounded-full bg-secondary text-white shadow-lg hover:bg-secondary/80 transition-colors"
+          >
+            <Bookmark className="w-6 h-6" />
+          </button>
+          <button
+            onClick={() => setIsChatOpen(true)}
+            className="p-3 rounded-full bg-primary text-white shadow-lg hover:bg-primary/80 transition-colors"
+          >
+            <MessageSquare className="w-6 h-6" />
+          </button>
+        </div>
       </div>
 
       <SettingsDialog
         open={isSettingsOpen}
         onOpenChange={setIsSettingsOpen}
         onConfigSaved={handleConfigSaved}
+      />
+      
+      <ChatDialog 
+        open={isChatOpen}
+        onOpenChange={setIsChatOpen}
+      />
+      
+      <SavedMessages
+        open={isSavedMessagesOpen}
+        onOpenChange={setIsSavedMessagesOpen}
       />
     </div>
   );

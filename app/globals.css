@@ -38,9 +38,7 @@
 }
 
 .neon-glow {
-  box-shadow: 0 0 10px theme('colors.primary.DEFAULT'),
-              0 0 20px theme('colors.primary.DEFAULT'),
-              0 0 30px theme('colors.primary.DEFAULT');
+  box-shadow: none;
 }
 
 .glass-effect {
