@@ -114,7 +114,7 @@ export default function SettingsDialog({ open, onOpenChange, onConfigSaved }: Se
                 <SelectValue placeholder="选择 AI 模型" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Qwen/Qwen2-7B-Instruct">Qwen/Qwen2-7B-Instruct</SelectItem>
+                <SelectItem value="Qwen/Qwen2.5-7B-Instruct">Qwen/Qwen2.5-7B-Instruct</SelectItem>
                 <SelectItem value="gpt-3.5">GPT-3.5</SelectItem>
                 <SelectItem value="claude">Claude</SelectItem>
                 <SelectItem value="deepseek-ai/DeepSeek-V3">DeepSeek-V3</SelectItem>

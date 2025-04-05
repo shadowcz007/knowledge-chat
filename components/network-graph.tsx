@@ -79,15 +79,21 @@ export default function NetworkGraph() {
   useEffect(() => {
     if (!networkRef.current) return;
     
-    networkRef.current.setData({
-      nodes: graphData.nodes,
-      edges: graphData.edges,
-    });
+    // 清空当前数据
+    networkRef.current.setData({ nodes: [], edges: [] });
     
-    // 如果有数据，适应视图
-    if (graphData.nodes.length > 0) {
-      networkRef.current.fit();
-    }
+    // 短暂延迟后设置新数据
+    setTimeout(() => {
+      networkRef.current?.setData({
+        nodes: graphData.nodes,
+        edges: graphData.edges,
+      });
+      
+      // 如果有数据，适应视图
+      if (graphData.nodes.length > 0) {
+        networkRef.current?.fit();
+      }
+    }, 50);
   }, [graphData]);
 
   // 组件挂载时自动获取图谱数据

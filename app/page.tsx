@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Settings, MessageSquare, Bookmark } from 'lucide-react';
+import { Settings, MessageSquare, Bookmark, RefreshCw } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import SettingsDialog from '@/components/settings-dialog';
 import Sidebar from '@/components/sidebar';
@@ -9,7 +9,7 @@ import ConnectionStatus from '@/components/connection-status';
 import { MCPProvider, useMCPContext } from '@/contexts/mcp-context';
 import SavedMessages from '@/components/saved-messages';
 import ChatDialog from '@/components/chat-dialog';
-
+import { useGraphService } from '@/services/graph-service';
 
 const NetworkGraph = dynamic(() => import('@/components/network-graph'), {
   ssr: false,
@@ -20,6 +20,7 @@ function HomeContent() {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isSavedMessagesOpen, setIsSavedMessagesOpen] = useState(false);
   const { connect } = useMCPContext();
+  const { fetchGraphData } = useGraphService();
 
   const handleConfigSaved = (config: any) => {
     // 当配置保存时，尝试连接到 MCP
@@ -62,6 +63,12 @@ function HomeContent() {
         
         {/* 聊天和保存消息按钮 */}
         <div className="fixed right-4 bottom-4 flex flex-col gap-2 z-10">
+          <button
+            onClick={() => fetchGraphData()}
+            className="p-3 rounded-full bg-blue-500 text-white shadow-lg hover:bg-blue-600 transition-colors"
+          >
+            <RefreshCw className="w-6 h-6" />
+          </button>
           <button
             onClick={() => setIsSavedMessagesOpen(true)}
             className="p-3 rounded-full bg-secondary text-white shadow-lg hover:bg-secondary/80 transition-colors"

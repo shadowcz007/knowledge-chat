@@ -19,6 +19,14 @@ export default function Sidebar() {
     }
   }, [hasReadGraphTool, fetchGraphData]);
 
+  // 添加对 graphData 的监听
+  useEffect(() => {
+    // 当图谱数据变化时，可以添加一些视觉反馈
+    if (graphData.nodes.length > 0 || graphData.edges.length > 0) {
+      console.log("侧边栏检测到图谱数据更新:", graphData);
+    }
+  }, [graphData]);
+
   return (
     <div className="w-80 border-l border-secondary glass-effect">
       <Tabs defaultValue="entities" className="h-full">
