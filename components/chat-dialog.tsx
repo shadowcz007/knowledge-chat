@@ -5,7 +5,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Bookmark, BookmarkCheck, Send, Loader2 } from "lucide-react";
+import { Bookmark, BookmarkCheck, Send, Loader2, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useMCPContext } from "@/contexts/mcp-context";
 import { useGraphService } from "@/services/graph-service"; 
@@ -37,6 +37,7 @@ export default function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
   const createRelationsTools = tools.find(tool => tool.name === "create_relations");
   const updateUserPreferenceTools = tools.find(tool => tool.name === "update_user_preference");
   const userPreferencePrompt = prompts.find(prompt => prompt.name === "user_preference_extract_prompt");
+  const chatWithUserPreferencePrompt = prompts.find(prompt => prompt.name === "chat_with_user_preference_prompt");
 
   // 加载已保存的消息
   useEffect(() => {
@@ -134,11 +135,30 @@ export default function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
         role: "user",
         content: input
       });
+
+      // 获取系统提示词
+      let systemMessage = null;
+      if (chatWithUserPreferencePrompt) {
+        try {
+          const { messages: promptMessages } = await chatWithUserPreferencePrompt.execute({
+            // create_time: new Date().toISOString(),
+            // count:20
+          });
+          if (promptMessages && promptMessages.length > 0) {
+            systemMessage = {
+              role: "system",
+              content: promptMessages[0].content.text
+            };
+          }
+        } catch (error) {
+          console.error("获取系统提示词失败:", error);
+        }
+      }
       
       // 创建API请求体 - 不包含工具
       const requestBody = {
         model: config.aiModel,
-        messages: chatHistory,
+        messages: systemMessage ? [systemMessage, ...chatHistory] : chatHistory,
         stream: true
       };
       
@@ -551,10 +571,30 @@ export default function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
     }
   };
 
+  // 清空消息历史
+  const clearMessages = () => {
+    setMessages([]);
+    toast({
+      title: "已清空",
+      description: "聊天记录已清空",
+    });
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="glass-effect border-primary sm:max-w-[500px] h-[600px] flex flex-col">
-        <div className="text-xl font-bold text-primary neon-glow mb-2">AI 助手</div>
+        <div className="text-xl font-bold text-primary neon-glow mb-2 flex justify-between items-center">
+          <span>AI 助手</span>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={clearMessages}
+            className="text-muted-foreground hover:text-destructive"
+            title="清空对话"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
         
         {/* 消息区域 */}
         <ScrollArea className="flex-1 pr-4" ref={scrollAreaRef}>
