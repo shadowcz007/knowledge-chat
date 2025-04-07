@@ -8,7 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Bookmark, BookmarkCheck, Send, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useMCPContext } from "@/contexts/mcp-context";
-import { useGraphService } from "@/services/graph-service";
+import { useGraphService } from "@/services/graph-service"; 
 
 interface Message {
   role: "user" | "assistant";
@@ -29,12 +29,14 @@ export default function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
   const [isExtractingKnowledge, setIsExtractingKnowledge] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
-  const { tools } = useMCPContext();
-  const { fetchGraphData } = useGraphService();
+  const { tools,prompts } = useMCPContext();
+  const { fetchGraphData } = useGraphService(); 
 
   // 获取MCP工具
   const createEntitiesTools = tools.find(tool => tool.name === "create_entities");
   const createRelationsTools = tools.find(tool => tool.name === "create_relations");
+  const updateUserPreferenceTools = tools.find(tool => tool.name === "update_user_preference");
+  const userPreferencePrompt = prompts.find(prompt => prompt.name === "user_preference_extract_prompt");
 
   // 加载已保存的消息
   useEffect(() => {
@@ -194,6 +196,10 @@ export default function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
           }
         }
       }
+
+      // 提取用户偏好
+      await extractUserPreference(userMessage);
+
     } catch (error) {
       console.error("API请求错误:", error);
       toast({
@@ -464,6 +470,84 @@ export default function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
       });
     } finally {
       setIsExtractingKnowledge(false);
+    }
+  };
+
+  const extractUserPreference = async (message: Message) => {
+    if (!updateUserPreferenceTools || !userPreferencePrompt) {
+      console.error("缺少用户偏好相关工具或提示");
+      return;
+    }
+
+    try {
+      // 获取系统配置
+      const savedConfig = localStorage.getItem("systemConfig");
+      if (!savedConfig) {
+        throw new Error("系统配置不存在");
+      }
+      
+      const config = JSON.parse(savedConfig);
+      if (!config.apiUrl || !config.apiKey || !config.aiModel) {
+        throw new Error("API配置不完整");
+      }
+
+      // 获取用户偏好提取提示
+      const {messages} = await userPreferencePrompt.execute({
+        message: JSON.stringify(message)
+      });
+
+      // 调用API提取用户偏好
+      const response = await fetch(config.apiUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${config.apiKey}`
+        },
+        body: JSON.stringify({
+          model: config.aiModel,
+          messages: [ 
+            {
+              role: "user",
+              content: messages[0].content.text
+            }
+          ],
+          temperature: 0.2
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`API请求失败: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      const preferenceContent = data.choices[0].message.content;
+      
+      try {
+        // 解析返回的JSON数据
+        const preferences = JSON.parse(preferenceContent);
+        
+        // 更新用户偏好
+        await updateUserPreferenceTools.execute({
+          preferences: preferences
+        });
+
+        // 添加成功提示
+        toast({
+          title: "用户偏好已更新",
+          description: "已成功提取并更新用户偏好",
+        });
+
+      } catch (e) {
+        console.error("解析用户偏好数据失败:", e);
+        throw new Error("无法解析用户偏好数据");
+      }
+    } catch (error) {
+      console.error("提取用户偏好失败:", error);
+      toast({
+        title: "提取用户偏好失败",
+        description: error instanceof Error ? error.message : "提取用户偏好时出错",
+        variant: "destructive",
+      });
     }
   };
 

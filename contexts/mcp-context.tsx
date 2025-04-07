@@ -11,6 +11,7 @@ interface MCPContextType {
   isConnecting: boolean;
   error: string | null;
   tools: any[];
+  prompts: any[];
 }
 
 // 创建上下文
@@ -32,13 +33,14 @@ function MCPConnection({ children }: { children: ReactNode }) {
     loading,
     error: mcpError,
     tools: mcpTools,
+    prompts: mcpPrompts
   } = useMCP();
   
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tools, setTools] = useState<any[]>([]);
   const [mcpAddress, setMcpAddress] = useState<string>("");
-
+  const [prompts, setPrompts] = useState<any[]>([]);
   // 从本地存储加载配置
   useEffect(() => {
     const savedConfig = localStorage.getItem("systemConfig");
@@ -66,6 +68,12 @@ function MCPConnection({ children }: { children: ReactNode }) {
       setIsConnected(true);
     }
   }, [mcpTools]);
+
+  useEffect(() => {
+    if (mcpPrompts && mcpPrompts.length > 0) {
+      setPrompts(mcpPrompts);
+    }
+  }, [mcpPrompts]);
 
   // 监听 MCP 错误
   useEffect(() => {
@@ -101,7 +109,8 @@ function MCPConnection({ children }: { children: ReactNode }) {
         isConnected,
         isConnecting: loading,
         error,
-        tools
+        tools,
+        prompts
       }}
     >
       {children}
